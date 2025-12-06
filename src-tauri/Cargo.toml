@@ -1,0 +1,33 @@
+[package]
+name = "oplus_edl_toolkit"
+version = "0.5.0"
+description = "Oplus EDL Toolkit"
+authors = ["SnowWolf725"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "edl_toolkit_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1", features = ["derive"] }
+quick-xml = { version = "0.38.4", features = ["serde", "serialize"] }  
+serde_json = "1"
+serialport = "4.0"
+encoding = "0.2"
+byteorder = "1.4"
+anyhow = "1.0"
+thiserror = "1.0"
+

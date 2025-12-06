@@ -1,0 +1,41 @@
+export default {
+	config: {
+		title: 'Loader & Config Files',
+		loader: 'Loader:',
+		digest: 'Digest:',
+		sign:'Sign:',
+		selectBtn: 'Select',
+		portStatus: 'EDL device connected',
+		portStatusError: 'EDL device not found',
+	},
+	part: {
+		title: 'Device Partition Table',
+		filter: 'Using partition name to filter',
+		selectAll: 'SelectAll',
+		name: 'Name',
+		size: 'Size',
+		start: 'Start Sector',
+		num: 'Sector Num',
+		imgPath: 'Image Path',
+	},
+	reboot: {
+		title: 'Reboot to',
+		system: 'Reboot to System',
+		recovery: 'Reboot to Recovery',
+		fastboot: 'Reboot to Fastboot',
+		edl: 'Reboot to Edl',
+	},
+	operation: {
+		title: 'Operation',
+		sendLoader: 'Send Loader',
+		readGPT: 'Read GPT',
+		readPart: 'Read Partition',
+		writePart: 'Write Partition',
+		writeFromXML: 'Write from XML',
+		createXML: 'Save to XML',
+		saveAlert: 'Please select at least one partition.',
+	},
+	log: {
+		title: 'Log',
+	}
+}

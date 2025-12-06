@@ -1,0 +1,41 @@
+﻿export default {
+	config: {
+		title: '引導和刷機文件',
+		loader: '引導文件:',
+		digest: 'Digest文件:',
+		sign: 'Sign:',
+		selectBtn: '選擇',
+		portStatus: 'EDL設備已連接',
+		portStatusError: '未找到EDL設備',
+	},
+	part: {
+		title: '設備分區表',
+		filter: '使用分區名稱篩選',
+		selectAll: '全選',
+		name: '分區名稱',
+		size: '大小',
+		start: '起始扇區',
+		num: '扇區數',
+		imgPath: '映像檔路徑',
+	},
+	reboot: {
+		title: '重啟至',
+		system: '重啟到系統',
+		recovery: '重啟到Recovery',
+		fastboot: '重啟到fastboot',
+		edl: '重啟到EDL模式',
+	},
+	operation: {
+		title: '功能操作',
+		sendLoader: '發送引導',
+		readGPT: '讀取分區表',
+		readPart: '提取選中分區',
+		writePart: '寫入選中分區',
+		writeFromXML: 'XML寫入固件',
+		createXML: '保存至XML',
+		saveAlert: '請至少選取一個分區',
+	},
+	log: {
+		title: '操作日志',
+	}
+}
