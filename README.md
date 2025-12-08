@@ -24,4 +24,6 @@ npm run tauri build
 ```
 
 ## 🎉 Credit:
-Special thanks to 某贼@CoolAPK for the repost.
+* Special thanks to 某贼@CoolAPK for the repost.
+* [linux-msm/qdl](https://github.com/linux-msm/qdl) for the open C implementation of fh_loader
+* [qualcomm/qdlrs](https://github.com/qualcomm/qdlrs/) for the open Rust implementation of fh_loader
