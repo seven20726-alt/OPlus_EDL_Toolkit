@@ -22,7 +22,7 @@
 		title: '重啟至',
 		system: '重啟到系統',
 		recovery: '重啟到Recovery',
-		fastboot: '重啟到fastboot',
+		fastboot: '重啟到fastbootD',
 		edl: '重啟到EDL模式',
 		miscNotFound: "在分區列表中無法找到misc分區",
 	},
@@ -34,6 +34,7 @@
 		writePart: '寫入選中分區',
 		writeFromXML: 'XML寫入固件',
 		createXML: '保存至XML',
+		useBuildIn: '使用內建fh_loader',
 		saveAlert: '請至少選取一個分區',
 	},
 	log: {

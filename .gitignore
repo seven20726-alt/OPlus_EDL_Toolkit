@@ -23,3 +23,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+＃res files
+src-tauri/res/port_trace.txt
+src-tauri/res/cmd.xml
+src-tauri/res/rawprogram*.xml
+src-tauri/res/devprg
+src-tauri/res/digest
+src-tauri/res/sig

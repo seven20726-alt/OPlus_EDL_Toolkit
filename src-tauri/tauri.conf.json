@@ -31,6 +31,17 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "resources": [
+      "tools/fh_loader.exe",
+      "tools/QSaharaServer.exe",
+      "res/cfg.xml",
+      "res/sha256init.xml",
+      "res/transfercfg.xml",
+      "res/verify.xml",
+      "res/misc_tofastbootd.img",
+      "res/misc_torecovery.img",
+      "img/"
     ]
   }
 }

@@ -661,6 +661,9 @@ setInterval(updatePort, 1000);
                 <div class="section-title">
                     <span>{{ t('operation.title') }}</span>
                 </div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox">{{ t('operation.useBuildIn') }}</label>
+                </div>
                 <div class="radio-group">
                     <label><input type="radio" name="storage" checked> UFS</label>
                     <label><input type="radio" name="storage"> EMMC</label>
