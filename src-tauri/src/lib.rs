@@ -227,6 +227,21 @@ fn analysis_info(input: &str) -> String {
                 let model = content.replace("'", " ");
                 output = format!("{}\n Storage:{}", output, model.trim());
             }
+        } else if line.contains("Boot Partition Enabled") {
+            if let Some(hex_match) = re.find(line) {
+                let hex_str = hex_match.as_str();
+                match u64::from_str_radix(&hex_str[2..], 16) {
+                    Ok(decimal) => {
+                        let slot = if decimal == 1 {
+                            "A"
+                        } else {
+                            "B"
+                        };
+                        output = format!("{}\n Active slot:{}", output, slot);
+                    },
+                    Err(e) => eprintln!("Convert Failed: {}", e),
+                }
+            }
         } 
     });
     return output;
