@@ -115,7 +115,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: process.env.release_id,
-              data: await fs.readFile('./oplus_edl_toolkit.zip')  # The file to upload.
+              data: await fs.readFile('oplus_edl_toolkit.zip') 
             });
           
   publish-release:
