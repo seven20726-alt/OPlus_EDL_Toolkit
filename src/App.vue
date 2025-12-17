@@ -11,7 +11,10 @@
     const isDialogOpen = ref(false);
     const isBuildIn = ref(false);
     const activeTab = ref('tab_part');
-    
+    const activeStep = ref(1);
+    const edl_status = ref(0);
+    const percentage = ref(0);
+
     const { t, locale, availableLocales } = useI18n();
 
     const tabList = ref([
@@ -97,6 +100,16 @@
         });
     }
 
+    async function startFlashing() {
+        //activeStep.value = activeStep.value + 1;
+        //percentage.value = 50;
+        const edlFolder = document.getElementById('edlFolderPathDisplay').value;
+
+    }
+
+    async function stopFlashing() {
+    }
+
     const selectImgPath = async(item) => {
         try {
             const file = await open({
@@ -124,6 +137,10 @@
             { key: 'partNum', label: t('part.num'), width: '10%' },
             { key: 'imgPath', label: t('part.imgPath'), width: '40%' },
             { key: 'sel', label: t('config.selectBtn'), width: '10%' },
+        ];
+        tabList.value = [
+            { key: 'tab_part', label: t('part.title') },
+            { key: 'tab_edl', label: t('edl.title') },
         ];
     };
 
@@ -253,6 +270,10 @@
 
     async function rebootToEdl() {
         await invoke("reboot_to_edl");
+    }
+
+    async function clearLog() {
+        logContainer.innerHTML = "";
     }
 
     async function writeFromXML() {
@@ -557,6 +578,8 @@
                 });
                 if (dir) {
                     document.getElementById('edlFolderPathDisplay').value = dir;
+                    activeTab.value = 'tab_edl';
+                    activeStep.value = 2;
                 }
             } catch (error) {
                 console.error('Error occurred while selecting a folder:', error);
@@ -686,10 +709,49 @@ setInterval(updatePort, 1000);
                             </table>
                         </div>
                     </div>
+
+                    <!-- EDL Package Panel -->
+                    <div class="edl-panel" v-show="activeTab === 'tab_edl'">
+                        <div class="edl-panel-left">
+                            <v-stepper-vertical color="blue" v-model="activeStep" hide-actions>
+                                    <v-stepper-vertical-item :complete="activeStep > 1" :subtitle="t('edl.step1')" title="Step 1" value="1">
+                                        {{ t('edl.step1_content') }}
+                                    </v-stepper-vertical-item>
+                                    <v-stepper-vertical-item :complete="activeStep > 2" :subtitle="t('edl.step2')" title="Step 2" value="2">
+                                        {{ t('edl.step2_content') }}
+                                    </v-stepper-vertical-item>
+                                    <v-stepper-vertical-item :complete="activeStep > 3" :subtitle="t('edl.step3')" title="Step 3" value="3">
+                                        {{ t('edl.step3_content') }}
+                                    </v-stepper-vertical-item>
+                                    <v-stepper-vertical-item :complete="activeStep > 4" :subtitle="t('edl.step4')" title="Step 4" value="4">
+                                        {{ t('edl.step4_content') }}
+                                    </v-stepper-vertical-item>
+                                    <v-stepper-vertical-item :complete="activeStep > 5" :subtitle="t('edl.step5')" title="Step 5" value="5">
+                                        {{ t('edl.step5_content') }}
+                                    </v-stepper-vertical-item>
+                                    <v-stepper-vertical-item :complete="activeStep > 6" :subtitle="t('edl.step6')" title="Step 6" value="6">
+                                        {{ t('edl.step6_content') }}
+                                    </v-stepper-vertical-item>
+                            </v-stepper-vertical>
+                        </div>
+
+                        <div class="edl-panel-right">
+                            <div class="edl-panel-right-top">
+                                <v-progress-circular :model-value="percentage" :rotate="360" :size="100" :width="15" color="#03fc5a">
+                                    <template v-slot:default>
+                                        {{ percentage }} %
+                                    </template>
+                                </v-progress-circular>
+                            </div>
+                            <div class="edl-panel-right-bottom">
+                                <button class="edl-btn-green" v-show="edl_status == 0" @click="startFlashing()">{{ t('edl.start')}}</button>
+                                <button class="edl-btn-red" v-show="edl_status == 1" @click="stopFlashing()">{{ t('edl.stop')}}</button>
+                            </div>
+                        </div>
+                        
+                        </div>
+                    </div>
                 </div>
-
-
-            </div>
             <div class="right-container">
                 <!-- Reboot -->
                 <div class="right-top-table-wrapper">
@@ -734,6 +796,7 @@ setInterval(updatePort, 1000);
                 <div class="right-bottom-table-wrapper2">
                     <div class="section-title">
                         <span>{{ t('log.title') }}</span>
+                        <button class="btn-red" @click="clearLog">{{ t('log.clearLog') }}</button>
                     </div>
                     <div class="log-section" id="logContainer">
                     </div>
@@ -838,7 +901,39 @@ setInterval(updatePort, 1000);
     }
     .right-bottom-table-wrapper2 {
         height: 45%;
-    }   
+    }
+    .edl-panel {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        gap: 20px;
+        min-height: 0;
+    }
+    .edl-panel-left {
+        width: 60%;
+        height: 100%;
+        display: flex;
+    }
+    .edl-panel-right {
+        width: 40%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .edl-panel-right-top {
+        width: 100%;
+        height: 60%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .edl-panel-right-bottom {
+        width: 100%;
+        height: 40%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
     .table-container {
         max-height: 80%;
         overflow-y: auto;
@@ -955,6 +1050,20 @@ setInterval(updatePort, 1000);
     .btn-brown {
         background-color: #8c6c4c;
     }
+    .edl-btn-green {
+        background-color: #52c41a;
+        gap: 15px;
+        border-radius: 5px; 
+        padding: 20px;
+        font-size: 18px;
+    }
+    .edl-btn-red {
+        background-color: #ff4d4f;
+        gap: 15px;
+        border-radius: 5px;
+        padding: 20px;
+        font-size: 18px;
+    }
     .radio-group {
         display: flex;
         gap: 15px;
@@ -1049,5 +1158,8 @@ setInterval(updatePort, 1000);
         cursor: pointer;
         border-right: 1px solid #ddd;
         transition: background 0.3s;
+    }
+    .v-progress-circular {
+        margin: 1rem;
     }
 </style>

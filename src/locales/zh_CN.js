@@ -42,8 +42,23 @@
 	},
 	edl: {
 		title: 'EDL 刷机包',
+		step1: '选取 EDL 刷机包文件夹',
+		step1_content: '请将EDL刷机包解压, 并选择EDL刷机包所在的文件夹',
+		step2: '验证重要档案是否存在',
+		step2_content: '点选右边的开始按钮, 开始进行edl刷机, 程序将会自动检查资料夹内的档案并开始刷机',
+		step3: '合并散包成 Super.img',
+		step3_content: '由於刷机包中不存在刷机过程中需要的super.img, 所以程序将合并img文件成为super.img',
+		step4: '使用 rawprogram.xml 刷入分区',
+		step4_content: '程序将使用刷机包内的rawprogram.xml刷入对应的分区',
+		step5: '使用 patch.xml 修补分区',
+		step5_content: '程序将使用刷机包内的patch.xml对分区进行修补',
+		step6: '设置启动分区为槽位A',
+		step6_content: '已完成刷机, 将槽位A设置为启动槽位',
+		start: '开始',
+		stop: '中止',
 	},
 	log: {
 		title: '操作日志',
+		clearLog: '清除操作日志',
 	}
 }

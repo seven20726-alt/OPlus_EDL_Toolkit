@@ -5,6 +5,7 @@ import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
+import * as labsComponents from 'vuetify/labs/components'
 // Components
 import App from './App.vue'
 import en from "./locales/en.js";
@@ -23,7 +24,10 @@ const i18n = createI18n({
 });
 
 const vuetify = createVuetify({
-    components,
+    components: {
+        ...components,
+        ...labsComponents,
+    },
     directives,
 });
 

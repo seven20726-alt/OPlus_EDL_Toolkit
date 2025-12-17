@@ -42,8 +42,23 @@ export default {
 	},
 	edl: {
 		title: 'EDL package',
+		step1: 'Select EDL package folder',
+		step1_content: 'Please unzip the EDL firmware package and select the folder where the EDL package is located.',
+		step2: 'Check whether the critical files exist',
+		step2_content: 'Click the Start button on the right to initiate the EDL flashing process. The program will automatically verify the files in the folder and start flashing the device.',
+		step3: 'Merge Super image',
+		step3_content: 'Since the super.img required during the flashing process is not present in the EDL package, the program will merge the img files to create super.img.',
+		step4: 'Flash rawprogram.xml',
+		step4_content: 'The program will flash the corresponding partitions using the rawprogram.xml file included in the EDL package.',
+		step5: 'Flash patch.xml',
+		step5_content: 'The program will patch the corresponding partitions using the patch.xml file included in the EDL package.',
+		step6: 'Set active slot to slot A',
+		step6_content: 'Flashing completed. Slot A has been set as the boot slot.',
+		start: 'Start',
+		stop: 'Stop',
 	},
 	log: {
 		title: 'Log',
+		clearLog: 'Clear Log',
 	}
 }
