@@ -1,15 +1,13 @@
-﻿mod gpt_parser;
+﻿mod file_util;
+mod gpt_parser;
 mod qdl;
 
 use quick_xml::de::from_str;
 use quick_xml::se::to_string;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serialport::{available_ports, SerialPortType};
 use std::env;
 use std::fs;
-use std::fs::metadata;
-use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tauri::{AppHandle, Emitter};
@@ -126,134 +124,6 @@ fn create_program_dynamic(
     }
 }
 
-pub fn read_text_file(file_path: &str) -> Result<String, String> {
-    // Convert string path to Path object for validation
-    let path = Path::new(file_path);
-
-    // Validate path exists before reading
-    if !path.exists() {
-        return Err(format!("File does not exist: '{}'", file_path));
-    }
-
-    // Validate path is a file (not a directory)
-    if !path.is_file() {
-        return Err(format!("Path is a directory, not a file: '{}'", file_path));
-    }
-
-    // Read file content to string with error handling
-    match fs::read_to_string(path) {
-        Ok(content) => Ok(content),
-        Err(e) => {
-            // Map system errors to human-readable messages
-            let error_msg = match e.kind() {
-                std::io::ErrorKind::PermissionDenied => {
-                    format!("Permission denied: Cannot read file '{}'", file_path)
-                }
-                std::io::ErrorKind::NotFound => {
-                    format!("File not found: '{}'", file_path)
-                }
-                std::io::ErrorKind::InvalidData => {
-                    format!("Invalid text encoding: File '{}' is not a valid text file", file_path)
-                }
-                _ => format!(
-                    "Failed to read file '{}': {}",
-                    file_path, e
-                ),
-            };
-            Err(error_msg)
-        }
-    }
-}
-
-pub fn check_exist(file_path: &str) -> bool {
-    let path = Path::new(file_path);
-
-    let file_metadata = match metadata(path) {
-        Ok(meta) => meta,
-        Err(_) => return false,
-    };
-
-    file_metadata.is_file() && file_metadata.len() > 0
-}
-
-
-pub fn parse_file_path(full_path: &str) -> (String, String) {
-    // Convert the input string to a Path object for path manipulation
-    let path = Path::new(full_path);
-    if check_exist(full_path) == false {
-        return ("".to_string(), "".to_string());
-    }
-
-    // 1. Extract the file name from the path with error handling
-    let file_name = path
-        .file_name()
-        .ok_or_else(|| format!("Failed to extract file name from path '{}'", full_path)) // Return error string
-        .and_then(|os_str| {
-            // Convert OsStr to &str, return error if invalid Unicode
-            os_str.to_str()
-                .ok_or_else(|| format!("Path '{}' contains invalid Unicode characters", full_path))
-        })
-        .unwrap() // Panic on error (simple error handling for this example)
-        .to_string();
-
-    // 2. Extract the parent directory of the file with error handling
-    let directory = path
-        .parent()
-        .ok_or_else(|| format!("Failed to extract directory from path '{}' (may be root directory)", full_path))
-        .and_then(|path| {
-            // Convert Path to &str, return error if invalid Unicode
-            path.to_str()
-                .ok_or_else(|| format!("Directory path '{}' contains invalid Unicode characters", full_path))
-        })
-        .unwrap() // Panic on error (simple error handling for this example)
-        .to_string();
-
-    (file_name, directory)
-}
-
-fn analysis_info(input: &str) -> String {
-    let mut output = String::new();
-    let re = Regex::new(r"0x[0-9a-fA-F]+").expect("Reg compile failed");
-    input.lines().for_each(|line| {
-        if line.contains("Device Total Physical Partitions") {
-            if let Some(hex_match) = re.find(line) {
-                let hex_str = hex_match.as_str();
-                match u64::from_str_radix(&hex_str[2..], 16) {
-                    Ok(decimal) => { output = format!("{}\n Device Total Physical Partitions:{}", output, decimal);},
-                    Err(e) => eprintln!("Convert Failed: {}", e),
-                }
-            }
-            println!("{}", line);
-        } else if line.contains("Device Serial Number") {
-            if let Some(hex_match) = re.find(line) {
-                let hex_str = hex_match.as_str();
-                output = format!("{}\n Device Serial Number:{}", output, hex_str);
-            }
-        } else if line.contains("UFS Inquiry Command Output") {
-            if let Some((_, content)) = line.split_once("Output:") {
-                let model = content.replace("'", " ");
-                output = format!("{}\n Storage:{}", output, model.trim());
-            }
-        } else if line.contains("Boot Partition Enabled") {
-            if let Some(hex_match) = re.find(line) {
-                let hex_str = hex_match.as_str();
-                match u64::from_str_radix(&hex_str[2..], 16) {
-                    Ok(decimal) => {
-                        let slot = if decimal == 1 {
-                            "A"
-                        } else {
-                            "B"
-                        };
-                        output = format!("{}\n Active slot:{}", output, slot);
-                    },
-                    Err(e) => eprintln!("Convert Failed: {}", e),
-                }
-            }
-        } 
-    });
-    return output;
-}
-
 fn setup_env(app: &AppHandle) -> Config {
     let mut config = Config {
         fh_loader_path: String::new(),
@@ -295,27 +165,6 @@ fn setup_env(app: &AppHandle) -> Config {
     config.sahara_server_path_linux = sahara_server_path_linux.to_str().unwrap_or("QSaharaServer").to_string();
     config.is_connect = !config.fh_port_conn_str.is_empty();
     return config;
-}
-
-fn create_dir_if_not_exists(path: &str) -> io::Result<()> {
-    let dir_path = Path::new(path);
-    if !dir_path.exists() {
-        fs::create_dir_all(dir_path)?;
-    }
-    Ok(())
-}
-
-fn write_to_file(path: &str, output_dir: &str, content: &str) {
-    if let Err(e) = create_dir_if_not_exists(output_dir) {
-        println!("create {} dir failed:{}", output_dir, e);
-    }
-    let file_name = format!("{}/{}", &output_dir, &path);
-    println!("file:{}", &file_name);
-    if let Err(e) = fs::write(&file_name, content) {
-        eprintln!("write file{}failed:{}", file_name, e);
-    } else {
-        println!("write file success:{}", file_name);
-    }
 }
 
 fn exec_cmd(app: &AppHandle, cmd: &[&str], current_dir:&Path) -> String {
@@ -394,7 +243,7 @@ fn reboot_to_system(app: AppHandle) {
         return ();
     }
     let cmd = "<?xml version=\"1.0\" ?><data><power DelayInSeconds=\"0\" value=\"reset\" /></data>";
-    write_to_file("cmd.xml", "res", &cmd);
+    file_util::write_to_file("cmd.xml", "res", &cmd);
     let _ = app.emit("log_event", &format!("Reboot to system..."));
     #[cfg(target_os = "windows")] {
         let cmds = ["cmd", "/c", &config.fh_loader_path, &config.fh_port_conn_str, "--memoryname=ufs", "--sendxml=res/cmd.xml", "--noprompt", "--skip_configure", "--mainoutputdir=res"];
@@ -413,9 +262,9 @@ fn reboot_to_recovery(app: AppHandle, xml: &str) {
         return ();
     }
     // flash misc partition
-    write_to_file("cmd1.xml", "res", &xml);
+    file_util::write_to_file("cmd1.xml", "res", &xml);
     let cmd = "<?xml version=\"1.0\" ?><data><power DelayInSeconds=\"0\" value=\"reset\" /></data>";
-    write_to_file("cmd.xml", "res", &cmd);
+    file_util::write_to_file("cmd.xml", "res", &cmd);
     
     let _ = app.emit("log_event", &format!("Writ misc partition ..."));
     #[cfg(target_os = "windows")] {
@@ -447,10 +296,10 @@ fn reboot_to_fastboot(app: AppHandle, xml: &str) {
         return ();
     }
     // flash misc partition
-    write_to_file("cmd.xml", "res", &xml);
+    file_util::write_to_file("cmd.xml", "res", &xml);
     let _ = app.emit("log_event", &format!("Writ misc partition ..."));
     let cmd = "<?xml version=\"1.0\" ?><data><power DelayInSeconds=\"0\" value=\"reset\" /></data>";
-    write_to_file("cmd.xml", "res", &cmd);
+    file_util::write_to_file("cmd.xml", "res", &cmd);
 
     #[cfg(target_os = "windows")] {
         let cmds = ["cmd", "/c", &config.fh_loader_path, &config.fh_port_conn_str, 
@@ -481,7 +330,7 @@ fn reboot_to_edl(app: AppHandle) {
         return ();
     }
     let cmd = "<?xml version=\"1.0\" ?><data><power DelayInSeconds=\"0\" value=\"reset_to_edl\" /></data>";
-    write_to_file("cmd.xml", "res", &cmd);
+    file_util::write_to_file("cmd.xml", "res", &cmd);
     let _ = app.emit("log_event", &format!("Reboot to EDL..."));
     #[cfg(target_os = "windows")] {
         let cmds = ["cmd", "/c", &config.fh_loader_path, &config.fh_port_conn_str, "--memoryname=ufs", "--sendxml=res/cmd.xml", "--noprompt", "--skip_configure", "--mainoutputdir=res"];
@@ -510,12 +359,12 @@ fn write_part(app: AppHandle, xml: &str)  -> String {
     match from_str::<DataRoot>(&xml) {
         Ok(data_root) => {
             let output_dir = "res";
-            if let Err(e) = create_dir_if_not_exists(output_dir) {
+            if let Err(e) = file_util::create_dir_if_not_exists(output_dir) {
                 return format!("create res dir failed:{}", e);
             }
             // Iterate and print each program
             for mut program in data_root.programs {
-               let (file_name, dir_path) = parse_file_path(&program.filename);
+               let (file_name, dir_path) = file_util::parse_file_path(&program.filename);
                println!("Test {}, {}, {}", &program.filename, &file_name, &dir_path);
                program.filename = file_name;
                let program_xml = match to_string(&program) {
@@ -567,7 +416,7 @@ fn read_part(app: AppHandle, xml: &str)  -> String {
     match from_str::<DataRoot>(&xml) {
         Ok(data_root) => {
             let output_dir = "res";
-            if let Err(e) = create_dir_if_not_exists(output_dir) {
+            if let Err(e) = file_util::create_dir_if_not_exists(output_dir) {
                 return format!("create res dir failed:{}", e);
             }
             // Iterate and print each read
@@ -697,17 +546,17 @@ fn write_from_xml(app: AppHandle, file_path:&str) -> String {
     if config.is_connect == false {
         return format!("Port not available");
     }
-    let xml = match read_text_file(file_path) {
+    let xml = match file_util::read_text_file(file_path) {
         Ok(content) => content,
         Err(e) => format!("Error reading file: {}", e),
     };
-    let (_file_name, dir_path) = parse_file_path(file_path);
+    let (_file_name, dir_path) = file_util::parse_file_path(file_path);
     let dir_str = format!("--search_path={}", &dir_path);
 
     match from_str::<DataRoot>(&xml) {
         Ok(data_root) => {
             let output_dir = "res";
-            if let Err(e) = create_dir_if_not_exists(output_dir) {
+            if let Err(e) = file_util::create_dir_if_not_exists(output_dir) {
                 return format!("create res dir failed:{}", e);
             }
             // Iterate and print each program
@@ -783,7 +632,7 @@ fn read_gpt(app: AppHandle) {
              }
         };
         let xml_content = format!("<?xml version=\"1.0\" ?>\n<data>\n{}\n</data>\n", read_xml);
-        write_to_file("cmd.xml", "res", &xml_content);
+        file_util::write_to_file("cmd.xml", "res", &xml_content);
         #[cfg(target_os = "windows")] {
             let cmds = ["cmd", "/c", &config.fh_loader_path, &config.fh_port_conn_str, "--memoryname=ufs", 
                 "--sendxml=res/cmd.xml", "--convertprogram2read", "--mainoutputdir=img", "--skip_configure", "--showpercentagecomplete", "--noprompt"];
@@ -798,7 +647,7 @@ fn read_gpt(app: AppHandle) {
         //parser gpt
         let file_path = format!("img/gpt_main{}.bin", i).to_string();
         let mut parser = gpt_parser::GptParser::new();
-        if check_exist(&file_path) == false {
+        if file_util::check_file_exist(&file_path) == false {
             println!("error");
             return;
         } else {
@@ -836,14 +685,14 @@ fn read_device_info(app: AppHandle) -> String {
         return "Device not found".to_string();
     }
     let cmd = "<?xml version=\"1.0\" ?><data><getstorageinfo physical_partition_number=\"0\" /></data>";
-    write_to_file("cmd.xml", "res", &cmd);
+    file_util::write_to_file("cmd.xml", "res", &cmd);
     let _ = app.emit("log_event", &format!("Reboot to EDL..."));
     #[cfg(target_os = "windows")] {
         let cmds = ["cmd", "/c", &config.fh_loader_path, &config.fh_port_conn_str, "--memoryname=ufs", 
                    "--sendxml=res/cmd.xml", "--noprompt", "--skip_configure", "--mainoutputdir=res"];
         let result = exec_cmd(&app, &cmds, PathBuf::from(".").as_path());
         if result.starts_with("[Error]") == false {
-            return analysis_info(&result);
+            return file_util::analysis_info(&result);
         }
     }
     #[cfg(target_os = "linux")] {
@@ -868,7 +717,7 @@ fn switch_slot(app: AppHandle, slot: &str) -> String {
     } else {
         "<?xml version=\"1.0\" ?><data><setbootablestoragedrive value=\"2\" /></data>".to_string()
     };
-    write_to_file("cmd.xml", "res", &cmd);
+    file_util::write_to_file("cmd.xml", "res", &cmd);
     let _ = app.emit("log_event", &format!("Reboot to EDL..."));
     let mut result = String::new();
     #[cfg(target_os = "windows")] {
@@ -884,6 +733,19 @@ fn switch_slot(app: AppHandle, slot: &str) -> String {
     return result;
 }
 
+#[tauri::command]
+fn start_flashing(app: AppHandle, path: &str) -> String {
+    let mut result = String::new();
+    if file_util::check_necessary_files_in_edl_folder(&path) {
+        let _ = app.emit("log_event", &format!("Check necessary files...OK"));
+        result = format!("Check necessary files...OK");
+    } else {
+        let _ = app.emit("log_event", &format!("Check necessary files...Error"));
+        result = format!("Check necessary files...Error");
+    }
+    return result;
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -891,7 +753,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![update_port, send_loader, read_part, write_part, read_gpt,
-        reboot_to_system, reboot_to_recovery, reboot_to_fastboot, reboot_to_edl, save_to_xml, write_from_xml, read_device_info, switch_slot])
+        reboot_to_system, reboot_to_recovery, reboot_to_fastboot, reboot_to_edl, save_to_xml, write_from_xml, 
+        read_device_info, switch_slot, start_flashing])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -104,7 +104,7 @@
         //activeStep.value = activeStep.value + 1;
         //percentage.value = 50;
         const edlFolder = document.getElementById('edlFolderPathDisplay').value;
-
+        await invoke("start_flashing", { path: edlFolder });
     }
 
     async function stopFlashing() {
