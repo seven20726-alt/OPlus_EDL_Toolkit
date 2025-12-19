@@ -1,8 +1,10 @@
-﻿mod file_util;
+﻿mod command_worker;
+mod file_util;
 mod gpt_parser;
 mod qdl;
 mod xml_file_util;
 
+use command_worker::CommandItem;
 use serialport::{available_ports, SerialPortType};
 use std::env;
 use std::fs;
@@ -530,7 +532,7 @@ fn read_device_info(app: AppHandle) -> String {
                    "--sendxml=res/cmd.xml", "--noprompt", "--zlpawarehost=1", "--mainoutputdir=res"];
         let result = exec_cmd(&app, &cmds, PathBuf::from(".").as_path());
         if result.starts_with("[Error]") == false {
-            return analysis_info(&result);
+            return file_util::analysis_info(&result);
         }
     }
     return "".to_string();
